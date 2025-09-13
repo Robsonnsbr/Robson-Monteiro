@@ -50,11 +50,27 @@ Esse script faz automaticamente:
 ## 🔧 Alternativa: Comandos Manuais
 
 ```bash
-# Build e sobe todos os containers
+# 1) Garantir .env do backend (apenas DEV)
+[ -f backend/.env ] || cp backend/.env.example backend/.env
+
+# 2) Subir containers (com build)
 docker compose up -d --build
 
-# Rodar migrations + seeds
-docker compose exec backend php artisan migrate:fresh --seed
+# 3) Backend: instalar dependências e APP_KEY
+docker compose exec -w /var/www/html backend composer install --no-interaction --prefer-dist
+docker compose exec -w /var/www/html backend php artisan key:generate || true
+
+# 4) Garantir que o MySQL está pronto
+docker compose exec mysql mysqladmin ping -h 127.0.0.1 -uroot -prootpass --silent || sleep 5
+
+# 5) Limpar configs e rodar migrations + seeds
+docker compose exec -w /var/www/html backend php artisan config:clear
+docker compose exec -w /var/www/html backend php artisan migrate:fresh --seed
+
+# 6) Frontend: instalar deps e iniciar em modo dev
+docker compose exec -w /usr/src/app frontend npm install
+docker compose exec -d -w /usr/src/app frontend sh -lc "npm run dev -- -H 0.0.0.0 -p 3000"
+
 ```
 
 ### Ajuste de permissões (se necessário no Laravel)
