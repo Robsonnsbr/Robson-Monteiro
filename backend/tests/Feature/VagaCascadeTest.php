@@ -11,7 +11,7 @@ class VagaCascadeTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function ao_excluir_vaga_os_vinculos_pivot_sao_removidos()
     {
         $vaga = Vaga::factory()->create(['status' => 'ativa']);

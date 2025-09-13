@@ -12,7 +12,7 @@ class CandidatoApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+   #[\PHPUnit\Framework\Attributes\Test]
     public function store_exige_pelo_menos_uma_vaga_ativa_e_recusa_pausada()
     {
         $vagaAtiva   = Vaga::factory()->create(['status' => 'ativa']);
@@ -46,7 +46,7 @@ class CandidatoApiTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function update_se_enviar_vaga_ids_exige_pelo_menos_uma_ativa_e_sincroniza()
     {
         $ativa1 = Vaga::factory()->create(['status' => 'ativa']);

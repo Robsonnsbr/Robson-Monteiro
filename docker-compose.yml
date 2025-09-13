@@ -12,10 +12,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpass"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 --protocol=TCP -uroot -prootpass || exit 1"]
       interval: 5s
       timeout: 3s
-      retries: 20
+      retries: 30
+      start_period: 40s
     restart: unless-stopped
     networks:
       - appnet
