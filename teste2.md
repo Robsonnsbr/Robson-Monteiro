@@ -1,19 +1,64 @@
-# Instruções Rápidas para Rodar o Projeto
+# 🚀 CRUD Laravel + Next.js + MySQL (Ambiente de Desenvolvimento)
 
-## Requisitos
-- Docker e Docker Compose
-- Portas livres: 80, 3000, 3306
+## ⚠️ Aviso Importante
+Este projeto está configurado **apenas para ambiente de desenvolvimento**.  
 
-## Subir o ambiente
+Para rodar em **produção**, será necessário:
+- Ajustar variáveis de ambiente (`APP_ENV=production`, `APP_DEBUG=false`, etc.)
+- Executar cache/configuração do Laravel (`php artisan config:cache`, `php artisan route:cache`, etc.)
+- Criar um `Dockerfile` específico para o frontend (`next build` + `next start`)
+- Ajustar segurança (HTTPS, usuários não-root, permissões de arquivos)
+
+> ⚠️ O arquivo **`.env.example`** contém apenas **dados simplificados para dev** (usuário, senha e banco básicos, além de seeds de teste).  
+> **Nunca use esse `.env` em produção** — crie um `.env` seguro e sem seeds.
+
+---
+
+## ✅ Requisitos
+- [Docker](https://docs.docker.com/get-docker/)  
+- [Docker Compose](https://docs.docker.com/compose/install/)  
+- Portas livres:
+  - **80** → Nginx (API)
+  - **3000** → Next.js (Frontend)
+  - **3306** → MySQL (Banco de dados)
+
+---
+
+## 🚀 Setup Automático (Recomendado)
+
+Na raiz do projeto, rode:
+
+```bash
+./setup.sh
+```
+
+Esse script faz automaticamente:
+1. Garante que exista `backend/.env` (copiado de `.env.example` apenas em dev)
+2. Sobe todos os containers (`backend`, `frontend`, `nginx`, `mysql`)
+3. Instala dependências (`composer install` + `npm install`)
+4. Gera `APP_KEY` do Laravel (se não existir)
+5. Executa migrations + seeds
+6. Inicia o **frontend em modo dev**
+
+🔗 Após execução, acesse:
+- **Frontend:** [http://localhost:3000](http://localhost:3000)  
+- **API Laravel:** [http://localhost/api/vagas](http://localhost/api/vagas)  
+- **API Laravel:** [http://localhost/api/candidatos](http://localhost/api/candidatos)  
+
+---
+
+## 🔧 Alternativa: Comandos Manuais
+
 ```bash
 # Build e sobe todos os containers
 docker compose up -d --build
 
-# Preparar banco (migrations + seeders)
+# Rodar migrations + seeds
 docker compose exec backend php artisan migrate:fresh --seed
 ```
 
-> Caso haja problema de permissão no Laravel:
+### Ajuste de permissões (se necessário no Laravel)
+
 ```bash
 docker compose exec -u 0 backend sh -c "
   mkdir -p /var/www/html/storage/logs /var/www/html/bootstrap/cache &&
@@ -24,46 +69,63 @@ docker compose exec -u 0 backend sh -c "
 "
 ```
 
-## URLs
-- Frontend (Next.js): http://localhost:3000  
-- API (Laravel): http://localhost/api  
-- MySQL: `localhost:3306` (DB: `appdb`, user: `appuser`, pass: `apppass`)
+---
+
+## 🌐 URLs
+- **Frontend (Next.js):** [http://localhost:3000](http://localhost:3000)  
+- **API (Laravel):** [http://localhost/api](http://localhost/api)  
+- **MySQL:** `localhost:3306`  
+  - DB: `appdb`  
+  - User: `appuser`  
+  - Pass: `apppass`
 
 > O frontend consome a API via `NEXT_PUBLIC_API_URL=http://localhost/api`.
 
-## Comandos úteis
+---
+
+## 📌 Comandos Úteis
+
 ```bash
 # Logs de todos os serviços
 docker compose logs -f
 
-# Acessar container backend
+# Acessar container do backend
 docker compose exec backend bash
 
-# Rodar comandos artisan
+# Comandos artisan
 docker compose exec backend php artisan route:list
-
 docker compose exec backend php artisan migrate
-
 docker compose exec backend php artisan db:seed
 
 # MySQL CLI
 docker compose exec mysql mysql -uappuser -papppass appdb -e "SHOW TABLES;"
 
-# Reconstruir e reiniciar
+# Resetar completamente (containers + volumes)
 docker compose down -v
-docker compose up -d --build
+./setup.sh
 ```
 
-## Estrutura resumida
+---
+
+## 📂 Estrutura Resumida
+
 ```
 /
-├─ backend/         # Laravel
-├─ frontend/        # Next.js
-└─ docker/          # Dockerfiles e configs
+├─ backend/         # Laravel API (CRUD de Vagas e Candidatos)
+├─ frontend/        # Next.js + Tailwind (UI)
+├─ docker/          # Dockerfiles e configs (nginx, backend, etc.)
+├─ setup.sh         # Script automático de inicialização
+└─ docker-compose.yml
 ```
 
-## Fluxo rápido de desenvolvimento
-1. Subir containers: `docker compose up -d --build`  
-2. Migrar + seed: `docker compose exec backend php artisan migrate:fresh --seed`  
-3. Acessar frontend e API  
-4. Editar telas e backend conforme necessário
+---
+
+## 🔄 Fluxo Rápido de Desenvolvimento
+1. Execute:  
+   ```bash
+   ./setup.sh
+   ```
+2. Acesse:  
+   - Frontend → [http://localhost:3000](http://localhost:3000)  
+   - API → [http://localhost/api/vagas](http://localhost/api/vagas)  
+3. Desenvolva frontend/backend normalmente ✨  
