@@ -70,7 +70,7 @@ docker compose exec -w /var/www/html backend sh -lc "rm -f bootstrap/cache/confi
 docker compose exec -w /var/www/html backend php artisan config:clear
 docker compose exec -w /var/www/html backend php artisan cache:clear
 # Executa testes (falha interrompe o setup por causa do 'set -e')
-docker compose exec -w /var/www/html backend php artisan test --colors --parallel
+docker compose exec -w /var/www/html backend php artisan test --colors
 
 echo "==> [10/10] Instalando dependências do frontend e iniciando dev server..."
 docker compose exec -w /usr/src/app frontend npm install
