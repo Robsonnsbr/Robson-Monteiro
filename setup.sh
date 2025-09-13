@@ -65,11 +65,10 @@ echo "==> [8/10] Rodando migrations + seeds (ambiente dev: MySQL)..."
 docker compose exec -w /var/www/html backend php artisan migrate:fresh --seed
 
 echo "==> [9/10] Rodando TESTES do backend (usa .env.testing: SQLite em memória + log stderr)..."
-# Limpa quaisquer caches para não “vazar” config do env normal
+
 docker compose exec -w /var/www/html backend sh -lc "rm -f bootstrap/cache/config.php || true"
 docker compose exec -w /var/www/html backend php artisan config:clear
 docker compose exec -w /var/www/html backend php artisan cache:clear
-# Executa testes (falha interrompe o setup por causa do 'set -e')
 docker compose exec -w /var/www/html backend php artisan test --colors
 
 echo "==> [10/10] Instalando dependências do frontend e iniciando dev server..."
