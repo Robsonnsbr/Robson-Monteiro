@@ -28,29 +28,20 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    volumes:
-      - ./backend:/var/www/html
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
+      APP_URL: http://localhost
+      SANCTUM_STATEFUL_DOMAINS: localhost:3000
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: 3306
       DB_DATABASE: appdb
       DB_USERNAME: appuser
       DB_PASSWORD: apppass
-      APP_URL: http://localhost
-      SANCTUM_STATEFUL_DOMAINS: localhost:3000
-    entrypoint: >
-      sh -c "
-        set -e;
-        mkdir -p /var/www/html/storage/logs /var/www/html/bootstrap/cache;
-        chgrp -R 33 /var/www/html/storage /var/www/html/bootstrap || true;
-        chmod -R g+rwX /var/www/html/storage /var/www/html/bootstrap || true;
-        touch /var/www/html/storage/logs/laravel.log || true;
-        chown www-data:www-data /var/www/html/storage/logs/laravel.log || true;
-        exec docker-php-entrypoint php-fpm
-      "
+    volumes:
+      - ./backend:/var/www/html
+    entrypoint: ["/entrypoint.sh"]
     restart: unless-stopped
     networks:
       - appnet
@@ -63,7 +54,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./backend:/var/www/html
+      - ./backend:/var/www/html:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
     networks:
@@ -74,12 +65,22 @@ services:
     container_name: frontend
     working_dir: /usr/src/app
     environment:
-      - CHOKIDAR_USEPOLLING=true
-      - NEXT_PUBLIC_API_URL=http://localhost/api
+      NEXT_PUBLIC_API_URL: http://localhost/api
+      CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./frontend:/usr/src/app
-      - /usr/src/app/node_modules
-    command: sh -lc "apk add --no-cache libc6-compat && npm install && npm run dev -- -H 0.0.0.0 -p 3000"
+    command: >
+      sh -lc '
+        apk add --no-cache libc6-compat >/dev/null 2>&1 || true;
+        if [ -f package.json ] && [ -d node_modules ]; then
+          echo ">> node_modules encontrados. Servindo o Next.js...";
+          npm run dev -- -H 0.0.0.0 -p 3000;
+        else
+          echo ">> Contêiner do frontend pronto. Sem instalação automática.";
+          echo "   Rode manualmente dentro do contêiner: npm ci && npm run dev";
+          tail -f /dev/null;
+        fi
+      '
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -90,4 +91,4 @@ volumes:
   mysql_data:
 
 networks:
-  appnet:
+  appnet: {}
