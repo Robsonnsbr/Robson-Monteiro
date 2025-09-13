@@ -13,8 +13,8 @@ class Vaga extends Model
 
     protected $fillable = [
         'titulo',
-        'tipo',     // CLT | PJ | Freelancer
-        'status',   // ativa | pausada
+        'tipo',
+        'status',
     ];
 
     public function candidatos()
