@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
 type Vaga = {
   id: number;
@@ -17,6 +16,14 @@ export default function CandidatosPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [vagaIds, setVagaIds] = useState<number[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  // erros de validação
+  const [errors, setErrors] = useState<{
+    nome?: string;
+    email?: string;
+    vagas?: string;
+  }>({});
 
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
@@ -63,19 +70,51 @@ export default function CandidatosPage() {
     );
   };
 
+  // validações
+  const isValidEmail = (val: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+
+  const validateForm = () => {
+    const nextErrors: { nome?: string; email?: string; vagas?: string } = {};
+    if (!nome.trim()) nextErrors.nome = "Nome é obrigatório.";
+    if (!email.trim()) nextErrors.email = "Email é obrigatório.";
+    else if (!isValidEmail(email))
+      nextErrors.email = "Informe um email válido.";
+    if (vagaIds.length === 0) nextErrors.vagas = "Selecione ao menos uma vaga.";
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const criarCandidato = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch(`${API}/candidatos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome, email, vaga_ids: vagaIds }),
-    });
-    if (!res.ok) return alert("Erro ao criar candidato");
-    setNome("");
-    setEmail("");
-    setVagaIds([]);
-    setPage(1);
-    await load();
+    if (!validateForm()) return;
+
+    try {
+      setSubmitting(true);
+      const res = await fetch(`${API}/candidatos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: nome.trim(),
+          email: email.trim(),
+          vaga_ids: vagaIds,
+        }),
+      });
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        alert(`Erro ao criar candidato${msg ? `: ${msg}` : ""}`);
+        return;
+      }
+      // sucesso: limpa form e recarrega
+      setNome("");
+      setEmail("");
+      setVagaIds([]);
+      setErrors({});
+      setPage(1);
+      await load();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const deletar = async (id: number) => {
@@ -87,25 +126,6 @@ export default function CandidatosPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Candidatos</h1>
-        <div className="flex gap-2">
-          <Link
-            href="/"
-            className="px-3 py-2 rounded-md border hover:bg-gray-50"
-          >
-            Home
-          </Link>
-          <Link
-            href="/vagas"
-            className="px-3 py-2 rounded-md border hover:bg-gray-50"
-          >
-            Vagas
-          </Link>
-        </div>
-      </div>
-
-      {/* filtros */}
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="flex gap-3 items-end flex-wrap">
           <div>
@@ -152,36 +172,50 @@ export default function CandidatosPage() {
         </div>
       </div>
 
-      {/* formulário */}
       <form
         onSubmit={criarCandidato}
         className="rounded-2xl border bg-white p-4 shadow-sm max-w-xl space-y-4"
+        noValidate
       >
         <h2 className="font-semibold">Novo candidato</h2>
         <div>
           <label className="block text-sm font-medium">Nome</label>
           <input
-            className="border p-2 rounded-md w-full"
+            className={`border p-2 rounded-md w-full ${
+              errors.nome ? "border-red-500" : ""
+            }`}
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            required
+            aria-invalid={!!errors.nome}
           />
+          {errors.nome && (
+            <p className="mt-1 text-sm text-red-600">{errors.nome}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium">Email</label>
           <input
             type="email"
-            className="border p-2 rounded-md w-full"
+            className={`border p-2 rounded-md w-full ${
+              errors.email ? "border-red-500" : ""
+            }`}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
+            aria-invalid={!!errors.email}
           />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">
             Inscrever em vagas ativas
           </label>
-          <div className="max-h-56 overflow-auto border rounded-md bg-white">
+          <div
+            className={`max-h-56 overflow-auto border rounded-md bg-white ${
+              errors.vagas ? "border-red-500" : ""
+            }`}
+          >
             {vagas.map((v) => (
               <label
                 key={v.id}
@@ -201,13 +235,18 @@ export default function CandidatosPage() {
               <div className="p-3 text-gray-500">Nenhuma vaga ativa</div>
             )}
           </div>
+          {errors.vagas && (
+            <p className="mt-1 text-sm text-red-600">{errors.vagas}</p>
+          )}
         </div>
-        <button className="px-4 py-2 rounded-md bg-black text-white">
-          Salvar
+        <button
+          className="px-4 py-2 rounded-md bg-black text-white disabled:opacity-60"
+          disabled={submitting}
+        >
+          {submitting ? "Salvando..." : "Salvar"}
         </button>
       </form>
 
-      {/* tabela */}
       <div className="rounded-2xl border bg-white p-0 overflow-hidden shadow-sm">
         <table className="w-full">
           <thead className="bg-gray-100">

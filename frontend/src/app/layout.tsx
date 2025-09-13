@@ -48,7 +48,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className="bg-gray-50 text-gray-900">
         <Header />
-        <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+        <main className="max-w-6xl mx-auto px-12 py-8">{children}</main>
       </body>
     </html>
   );

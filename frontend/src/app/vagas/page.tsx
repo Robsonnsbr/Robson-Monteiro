@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
 type Vaga = {
   id: number;
@@ -97,24 +96,6 @@ export default function VagasPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Vagas</h1>
-        <div className="flex gap-2">
-          <Link
-            href="/"
-            className="px-3 py-2 rounded-md border hover:bg-gray-50"
-          >
-            Home
-          </Link>
-          <Link
-            href="/candidatos"
-            className="px-3 py-2 rounded-md border hover:bg-gray-50"
-          >
-            Candidatos
-          </Link>
-        </div>
-      </div>
-
       <div className="rounded-2xl border bg-white p-4 shadow-sm space-y-3">
         <div className="flex gap-3 items-end flex-wrap">
           <div>
