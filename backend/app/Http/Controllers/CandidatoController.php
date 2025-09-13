@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Candidato;
-use App\Models\Vaga;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CandidatoController extends Controller
 {
@@ -34,21 +35,25 @@ class CandidatoController extends Controller
     public function store(Request $r)
     {
         $data = $r->validate([
-            'nome'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:candidatos,email',
-            'vaga_ids' => 'array',
-            'vaga_ids.*' => 'integer|exists:vagas,id',
+            'nome'       => ['required','string','max:255'],
+            'email'      => ['required','email','unique:candidatos,email'],
+            'vaga_ids'   => ['required','array','min:1'],
+            'vaga_ids.*' => [
+                'integer',
+                Rule::exists('vagas','id')->where(fn($q) => $q->where('status','ativa')),
+            ],
         ]);
 
-        $ids = collect($data['vaga_ids'] ?? []);
-        $validos = Vaga::whereIn('id', $ids)->where('status','ativa')->pluck('id');
-        if ($ids->diff($validos)->isNotEmpty()) {
-            return response()->json(['message' => 'Há vagas pausadas nesta seleção.'], 422);
-        }
+        return DB::transaction(function () use ($data) {
+            $cand = Candidato::create([
+                'nome'  => $data['nome'],
+                'email' => $data['email'],
+            ]);
 
-        $cand = Candidato::create($data);
-        if ($validos->count()) $cand->vagas()->sync($validos);
-        return response()->json($cand->load('vagas:id,titulo'), 201);
+            $cand->vagas()->sync($data['vaga_ids']);
+
+            return response()->json($cand->load('vagas:id,titulo'), 201);
+        });
     }
 
     public function show(Candidato $candidato)
@@ -59,21 +64,25 @@ class CandidatoController extends Controller
     public function update(Request $r, Candidato $candidato)
     {
         $data = $r->validate([
-            'nome'     => 'sometimes|required|string|max:255',
-            'email'    => 'sometimes|required|email|unique:candidatos,email,'.$candidato->id,
-            'vaga_ids' => 'sometimes|array',
-            'vaga_ids.*' => 'integer|exists:vagas,id',
+            'nome'       => ['sometimes','required','string','max:255'],
+            'email'      => ['sometimes','required','email','unique:candidatos,email,'.$candidato->id],
+            'vaga_ids'   => ['sometimes','required','array','min:1'], // se vier, tem que ter pelo menos 1
+            'vaga_ids.*' => [
+                'integer',
+                Rule::exists('vagas','id')->where(fn($q) => $q->where('status','ativa')),
+            ],
         ]);
 
-        $candidato->update($data);
+        return DB::transaction(function () use ($data, $candidato) {
+            $candidato->update($data);
 
-        if ($r->has('vaga_ids')) {
-            $ids = collect($data['vaga_ids'] ?? []);
-            $validos = Vaga::whereIn('id', $ids)->where('status','ativa')->pluck('id');
-            $candidato->vagas()->sync($validos);
-        }
+            if (array_key_exists('vaga_ids', $data)) {
+                // Se veio vaga_ids, mantém sempre ≥ 1 ativa
+                $candidato->vagas()->sync($data['vaga_ids']);
+            }
 
-        return $candidato->load('vagas:id,titulo');
+            return $candidato->load('vagas:id,titulo');
+        });
     }
 
     public function destroy(Candidato $candidato)
