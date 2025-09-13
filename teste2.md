@@ -139,3 +139,14 @@ docker compose down -v
    - Frontend → [http://localhost:3000](http://localhost:3000)  
    - API → [http://localhost/api/vagas](http://localhost/api/vagas)  
 3. Desenvolva frontend/backend normalmente ✨  
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/517bd7c9-f25c-44a5-a2f2-b74e5bc310a1" width="200"/>
+  <img src="https://github.com/user-attachments/assets/d47f46bb-749a-4cb2-8a9b-4971cb3af610" width="200"/>
+  <img src="https://github.com/user-attachments/assets/16efdd3b-d7d5-46dd-833d-7d769f11d789" width="200"/>
+  <img src="https://github.com/user-attachments/assets/2b334a47-30c6-45fb-bbeb-54174d2c6f10" width="200"/>
+  <img src="https://github.com/user-attachments/assets/c4eb697f-15f2-4f08-a5b7-aace7ba7f49c" width="200"/>
+  <img src="https://github.com/user-attachments/assets/3ddc056c-ffbf-493c-9843-65f1f49e152b" width="200"/>
+  <img src="https://github.com/user-attachments/assets/e2331b23-b3fc-4f8b-a46e-5000742d3c5a" width="200"/>
+</p>
+
