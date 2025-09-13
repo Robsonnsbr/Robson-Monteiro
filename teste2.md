@@ -38,7 +38,8 @@ Esse script faz automaticamente:
 3. Instala dependências (`composer install` + `npm install`)
 4. Gera `APP_KEY` do Laravel (se não existir)
 5. Executa migrations + seeds
-6. Inicia o **frontend em modo dev**
+6. **Roda a suíte de testes (`php artisan test`) usando SQLite em memória**
+7. Inicia o **frontend em modo dev**
 
 🔗 Após execução, acesse:
 - **Frontend:** [http://localhost:3000](http://localhost:3000)  
@@ -67,22 +68,12 @@ docker compose exec mysql mysqladmin ping -h 127.0.0.1 -uroot -prootpass --silen
 docker compose exec -w /var/www/html backend php artisan config:clear
 docker compose exec -w /var/www/html backend php artisan migrate:fresh --seed
 
-# 6) Frontend: instalar deps e iniciar em modo dev
+# 6) Rodar os testes do backend (SQLite em memória)
+docker compose exec -e APP_ENV=testing -e DB_CONNECTION=sqlite -e DB_DATABASE=":memory:" -w /var/www/html backend php artisan test --ansi
+
+# 7) Frontend: instalar deps e iniciar em modo dev
 docker compose exec -w /usr/src/app frontend npm install
 docker compose exec -d -w /usr/src/app frontend sh -lc "npm run dev -- -H 0.0.0.0 -p 3000"
-
-```
-
-### Ajuste de permissões (se necessário no Laravel)
-
-```bash
-docker compose exec -u 0 backend sh -c "
-  mkdir -p /var/www/html/storage/logs /var/www/html/bootstrap/cache &&
-  chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap &&
-  chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap &&
-  touch /var/www/html/storage/logs/laravel.log &&
-  chown www-data:www-data /var/www/html/storage/logs/laravel.log
-"
 ```
 
 ---
@@ -112,6 +103,9 @@ docker compose exec backend bash
 docker compose exec backend php artisan route:list
 docker compose exec backend php artisan migrate
 docker compose exec backend php artisan db:seed
+
+# Rodar novamente a suíte de testes (SQLite em memória)
+docker compose exec -e APP_ENV=testing -e DB_CONNECTION=sqlite -e DB_DATABASE=":memory:" backend php artisan test --ansi
 
 # MySQL CLI
 docker compose exec mysql mysql -uappuser -papppass appdb -e "SHOW TABLES;"
