@@ -1,69 +1,69 @@
-<div align="center">
-  <img src="https://signotech.com.br/wp-content/uploads/2023/03/SignoTech.webp" width="20%" />
-</div>
+# Instruções Rápidas para Rodar o Projeto
 
-# Teste para candidatos à vaga de Desenvolvedor
+## Requisitos
+- Docker e Docker Compose
+- Portas livres: 80, 3000, 3306
 
-Olá caro desenvolvedor, nesse teste analisaremos seu conhecimento geral e inclusive velocidade de desenvolvimento. Abaixo explicaremos tudo o que será necessário.
+## Subir o ambiente
+```bash
+# Build e sobe todos os containers
+docker compose up -d --build
 
-## Instruções
+# Preparar banco (migrations + seeders)
+docker compose exec backend php artisan migrate:fresh --seed
+```
 
-O desafio consiste em implementar uma aplicação web utilizando o framework PHP Laravel ou NodeJS, um banco de dados relacional (Mysql, Postgres ou SQLite), que terá como finalidade a inscrição de candidatos a uma oportunidade de emprego.
+> Caso haja problema de permissão no Laravel:
+```bash
+docker compose exec -u 0 backend sh -c "
+  mkdir -p /var/www/html/storage/logs /var/www/html/bootstrap/cache &&
+  chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap &&
+  chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap &&
+  touch /var/www/html/storage/logs/laravel.log &&
+  chown www-data:www-data /var/www/html/storage/logs/laravel.log
+"
+```
 
-Sua aplicação deve possuir:
+## URLs
+- Frontend (Next.js): http://localhost:3000  
+- API (Laravel): http://localhost/api  
+- MySQL: `localhost:3306` (DB: `appdb`, user: `appuser`, pass: `apppass`)
 
-- CRUD de vagas:
-  - Criar, editar, excluir e listar vagas.
-  - A vaga pode ser CLT, Pessoa Jurídica ou Freelancer.
-- CRUD de candidatos:
-  - Criar, editar, excluir e listar candidatos.
-- Um cadidato pode se inscrever em uma ou mais vagas.
-- Deve ser ser possível "pausar" a vaga, evitando a inscrição de candidatos.
-- Cada CRUD:
-  - Deve ser filtrável e ordenável por qualquer campo, e possuir paginação de 20 itens.
-  - Deve possuir formulários para criação e atualização de seus itens.
-  - Deve permitir a deleção de qualquer item de sua lista.
-  - Implementar validações de campos obrigatórios e tipos de dados.
-- Testes unitários e de unidade.
+> O frontend consome a API via `NEXT_PUBLIC_API_URL=http://localhost/api`.
 
-## Banco de dados
+## Comandos úteis
+```bash
+# Logs de todos os serviços
+docker compose logs -f
 
-- O banco de dados deve ser criado utilizando migrations, e também utilizar Seeds e Factorys para popular as informações no banco de dados.
+# Acessar container backend
+docker compose exec backend bash
 
-## Tecnologias a serem utilizadas
+# Rodar comandos artisan
+docker compose exec backend php artisan route:list
 
-Devem ser utilizadas as seguintes tecnologias:
+docker compose exec backend php artisan migrate
 
-- HTML
-- CSS
-- Javascript
-- Framework Laravel (PHP) OU NodeJS + ReactJS
-- Docker (construção do ambiente de desenvolvimento)
-- Mysql, Postgres ou SQLite
+docker compose exec backend php artisan db:seed
 
-## Entrega
+# MySQL CLI
+docker compose exec mysql mysql -uappuser -papppass appdb -e "SHOW TABLES;"
 
-- Para iniciar o teste, faça um fork deste repositório; **Se você apenas clonar o repositório não vai conseguir fazer push.**
-- Crie uma branch com o seu nome completo;
-- Altere o arquivo teste2.md com as informações necessárias para executar o seu teste (comandos, migrations, seeds, etc);
-- Depois de finalizado, envie-nos o pull request;
+# Reconstruir e reiniciar
+docker compose down -v
+docker compose up -d --build
+```
 
-## Bônus
+## Estrutura resumida
+```
+/
+├─ backend/         # Laravel
+├─ frontend/        # Next.js
+└─ docker/          # Dockerfiles e configs
+```
 
-- API Rest JSON para todos os CRUDS listados acima.
-- Permitir deleção em massa de itens nos CRUDs.
-- Permitir que o usuário mude o número de itens por página.
-- Implementar autenticação de usuário na aplicação.
-- Documentação da API (usando Swagger ou Postman)
-- Deploy dentro do docker
-
-## O que iremos analisar
-
-- Organização do código;
-- Aplicação de design patterns;
-- Aplicação de testes; (diferencial, não obrigatório)
-- Separação de módulos e componentes;
-- Legibilidade;
-- Criação do ambiente com Docker. (diferencial, não obrigatório)
-
-### Boa sorte!
+## Fluxo rápido de desenvolvimento
+1. Subir containers: `docker compose up -d --build`  
+2. Migrar + seed: `docker compose exec backend php artisan migrate:fresh --seed`  
+3. Acessar frontend e API  
+4. Editar telas e backend conforme necessário
